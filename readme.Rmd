@@ -1,0 +1,53 @@
+---
+title: "Opsætning og vigtige filer"
+author: "Hans Christian Hansen"
+date: "2023-04-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Setup
+
+Der er en handy fil til opsætning af pakker og hjælpefunktioner.
+
+```{r eval = FALSE}
+source("setup.R")
+```
+
+Øverst i filen er der en variabel ved navn `package_list`, som indeholder alle pakker som skal bruges til projektet. **VIGTIGT** hvis du selv bruger nogen pakker som ikke står i listen, så *sørg* for at tilføje pakkens navn på listen. Hvis pakken ikke er installeret på din computer, sørger koden for også at installere den for dig, før den loader den.
+
+## Vigtige filer
+
+Indtil videre er der to filer som er vigtige til regressionen: `full_regression_list.Rds` og `hash_table.Rds`. Det burde ikke være nødvendigt at hente nogen af Excel-filerne udover dem med variabelnavne (dvs. ingen fra selve regressionen).
+
+- `full_regression_list`
+  Indeholder samtlige 2047 regressioner indekseret i samme rækkefølge som de blev udført i.
+  Hvert element er i sig selv en liste med tre dele:
+  - *results*: selve outputtet fra regressionen.
+  - *names*: navnene på de kategorier/grupper som regressionen er udført efter.
+  - *test_scores*: likelihood ratio-, Wald- og score-tests for den tilhørende regression. Måske ikke vigtigt?
+  
+- `hash_table`
+  For at hurtigt kunne sammenligne variable og skifte visualiseringerne har jeg lavet et hash table med alle variabelkategorier fra regressionen i som key med tilhørende regression som value. Idéen er, at vi for hver tænkelige kombination af variable kan vi sammensætte én vektor som svarer til en liste i `hash_table`.
+  
+Begge filer kan hentes som normale Rds-filer.
+
+## Funktioner
+
+Indtil videre har jeg lavet to funktioner til at hjælpe med projektet:
+
+- `%!in%`
+  Logisk negering af `%in%`, dvs. brug den hvis du vil tjekke at et element *ikke* er i en liste.
+- `read_from_excel`
+  Bare giv en .xlsx-fil som path og den vil indlæse filen som en liste som indeholder hvert Excel-ark.
+  
+## Plan
+
+Find ud af noget med Shiny? Få et proof of koncept.
+
+## Andet?
+
+Tilføj selv, hvis I synes noget mangler eller har idéer.
