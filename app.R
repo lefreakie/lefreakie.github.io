@@ -6,26 +6,26 @@
 #
 #    http://shiny.rstudio.com/
 #
-
+source("setup.R)
 library(shiny)
 library(ggplot2)
 library(readxl)
 
-results_list <- read_rds("/Users/am/Desktop/full_regression_list.Rds")
+results_list <- read_rds("data/full_regression_list.Rds")
 
-mother <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "mother")))
-father <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "father")))
-educ <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "educ")))
-income <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "income")))
-baseline <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "baseline")))
-birth <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "birth")))
-civ_stat <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "civ_stat")))
+mother <- unlist(data.frame(read_excel("data/all_list_names.xlsx", sheet = "mother")))
+father <- unlist(data.frame(read_excel("data/all_list_names.xlsx", sheet = "father")))
+educ <- unlist(data.frame(read_excel("data/all_list_names.xlsx", sheet = "educ")))
+income <- unlist(data.frame(read_excel("data/all_list_names.xlsx", sheet = "income")))
+baseline <- unlist(data.frame(read_excel("data/all_list_names.xlsx", sheet = "baseline")))
+birth <- unlist(data.frame(read_excel("data/all_list_names.xlsx", sheet = "birth")))
+civ_stat <- unlist(data.frame(read_excel("data/all_list_names.xlsx", sheet = "civ_stat")))
 
-behavior <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "behavior")))
-lifestyle <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "lifestyle")))
-health <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "health")))
-mental <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "mental")))
-congenital <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "congenital")))
+behavior <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "behavior")))
+lifestyle <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "lifestyle")))
+health <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "health")))
+mental <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "mental")))
+congenital <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "congenital")))
 
 results1 <- results_list[[1]]$results %>%
     mutate(group_names = case_when(
