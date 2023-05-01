@@ -1,14 +1,16 @@
 source("setup.R")
 
 all_list_names <- unlist(read_from_excel("data/all_list_names.xlsx"), recursive = F)
+all_list_no_baseline <- read_rds("data/all_list_no_names.Rds")
 prs_categories <- unlist(read_from_excel("data/prs_categories.xlsx"), recursive = F)
 prs_explanatory <- read_from_excel("data/prs_explanatory.xlsx")[[1]]
 prs_inventoried <- unlist(read_from_excel("data/prs_inventoried.xlsx"), recursive = F)
 prs_list <- read_from_excel("data/prs_list.xlsx")
 somatic_variable_names <- unlist(read_from_excel("data/somatic_variable_names.xlsx"), recursive = F)
-somatic_variable_names_with_names <- unlist(read_from_excel("data/somatic_variable_names_with_baseline.xlsx"), recursive = F)
+somatic_variable_names_with_baseline <- unlist(read_from_excel("data/somatic_variable_names_with_baseline.xlsx"), recursive = F)
+all_list_no_baseline <- all_list_names[c(names(prs_categories), names(somatic_variable_names))]
 
-total <- list()
+#total <- list()
 
 for (i in seq(1, 2047, 89)){
 #
@@ -23,7 +25,6 @@ for (i in seq(1, 2047, 89)){
 #  }
 }
 
-total[[1]]
 # for tests:
 # 1 => test score
 # 2 => degrees of freedom
