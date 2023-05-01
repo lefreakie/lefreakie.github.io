@@ -6,7 +6,7 @@
 #
 #    http://shiny.rstudio.com/
 #
-source("setup.R)
+source("setup.R")
 library(shiny)
 library(ggplot2)
 library(readxl)
