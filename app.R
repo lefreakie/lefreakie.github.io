@@ -27,53 +27,11 @@ health <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "hea
 mental <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "mental")))
 congenital <- unlist(data.frame(read_excel("data/prs_inventoried.xlsx", sheet = "congenital")))
 
-results1 <- results_list[[1]]$results %>%
-    mutate(group_names = case_when(
-        variables %in% behavior ~"Behavior",
-        variables %in% lifestyle ~"Lifestyle",
-        variables %in% health ~"Health",
-        variables %in% mental ~"Mental",
-        variables %in% congenital ~"Congenital",
-        variables %in% mother ~"Mother",
-        variables %in% father ~"Father",
-        variables %in% educ ~"Education",
-        variables %in% income ~"Income",
-        variables %in% birth ~"Birth",
-        variables %in% civ_stat ~"Civil_Status",
-        variables %!in% health ~"Baseline"
-    ))
+results1 <- results_list[[1]]$results
 
-results2 <- results_list[[2]]$results %>%
-    mutate(group_names = case_when(
-        variables %in% behavior ~"Behavior",
-        variables %in% lifestyle ~"Lifestyle",
-        variables %in% health ~"Health",
-        variables %in% mental ~"Mental",
-        variables %in% congenital ~"Congenital",
-        variables %in% mother ~"Mother",
-        variables %in% father ~"Father",
-        variables %in% educ ~"Education",
-        variables %in% income ~"Income",
-        variables %in% birth ~"Birth",
-        variables %in% civ_stat ~"Civil_Status",
-        variables %!in% health ~"Baseline"
-    ))
+results2 <- results_list[[2]]$results 
 
-results_all <- results_list[[2047]]$results %>%
-    mutate(group_names = case_when(
-        variables %in% behavior ~"Behavior",
-        variables %in% lifestyle ~"Lifestyle",
-        variables %in% health ~"Health",
-        variables %in% mental ~"Mental",
-        variables %in% congenital ~"Congenital",
-        variables %in% mother ~"Mother",
-        variables %in% father ~"Father",
-        variables %in% educ ~"Education",
-        variables %in% income ~"Income",
-        variables %in% birth ~"Birth",
-        variables %in% civ_stat ~"Civil_Status",
-        variables %!in% health ~"Baseline"
-    ))
+results_all <- results_list[[2047]]$results
 
 ui <- fluidPage(
     sidebarPanel("Choice of variable"),
@@ -86,7 +44,7 @@ ui <- fluidPage(
                          selected = "dataset1")
         ),
         mainPanel(
-            plotOutput("plot")
+            plotOutput("plot", height = "600px")
         )
     )
 )
@@ -109,6 +67,20 @@ server <- function(input, output){
     
     output$plot <- renderPlot({
         selected_dataset() %>%
+        mutate(group_names = case_when(
+                variables %in% behavior ~"Behavior",
+                variables %in% lifestyle ~"Lifestyle",
+                variables %in% health ~"Health",
+                variables %in% mental ~"Mental",
+                variables %in% congenital ~"Congenital",
+                variables %in% mother ~"Mother",
+                variables %in% father ~"Father",
+                variables %in% educ ~"Education",
+                variables %in% income ~"Income",
+                variables %in% birth ~"Birth",
+                variables %in% civ_stat ~"Civil_Status",
+                variables %!in% health ~"Baseline"
+            )) %>%
         ggplot(aes(y = variables, color = group_names)) + 
             theme_classic() +
             geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
