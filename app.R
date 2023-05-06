@@ -1,49 +1,8 @@
-library(shiny)
-library(tidyverse)
-library(ggplot2)
-library(readxl)
+source("setup.R")
 
-package_list = c("tidyverse", "usethis", "r2r")
-
-`%!in%` <- Negate(`%in%`)
-
-# tjek for manglende pakker og installer om nødvendigt
-if (any(package_list %!in% installed.packages())) {
-    invisible(sapply(package_list, function(x){if ((x %!in% installed.packages())){
-        install.packages(x)
-    }
-    }))
-}
-
-#invisible(sapply(package_list, function(x){require(x, character.only = T)}))
-
-# indlæs pakker
-invisible(sapply(package_list, function(x){library(x, character.only = T)}))
-
-read_from_excel <- function(input){
-    sheets <- readxl::excel_sheets(input)
-    output <- map(sheets, function(x){readxl::read_xlsx(input, sheet = x, col_names = T)})
-    output
-}
-
-results_list <- read_rds("/Users/am/Desktop/full_regression_list.Rds")
-
-mother <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "mother")))
-father <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "father")))
-educ <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "educ")))
-income <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "income")))
-baseline <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "baseline")))
-birth <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "birth")))
-civ_stat <- unlist(data.frame(read_excel("/Users/am/Desktop/all_list_names.xlsx", sheet = "civ_stat")))
-
-behavior <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "behavior")))
-lifestyle <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "lifestyle")))
-health <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "health")))
-mental <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "mental")))
-congenital <- unlist(data.frame(read_excel("/Users/am/Desktop/prs_inventoried.xlsx", sheet = "congenital")))
-PC <- unlist(data.frame(read_excel("/Users/am/Desktop/baseline_variables.xlsx", sheet = "PC")))
-ld_pred <- unlist(data.frame(read_excel("/Users/am/Desktop/baseline_variables.xlsx", sheet = "metaPRS_ldpred")))
-patient <- unlist(data.frame(read_excel("/Users/am/Desktop/baseline_variables.xlsx", sheet = "patient")))
+results_list <- read_rds("data/full_regression_list.Rds")
+all_list_names <- read_from_excel("data/all_list_names.xlsx", T)
+prs_inventoried <- read_from_excel("data/prs_inventoried.xlsx", T)
 
 results_behavior <- results_list[[1]]$results
 results_lifestyle <- results_list[[2]]$results
@@ -136,54 +95,41 @@ server <- function(input, output){
         }
     })
     
+    map_to_variable <- function(variables){case_when(
+                variables %in% prs_inventoried$behavior ~"Behavior",
+                variables %in% prs_inventoried$lifestyle ~"Lifestyle",
+                variables %in% prs_inventoried$health ~"Health",
+                variables %in% prs_inventoried$mental ~"Mental",
+                variables %in% prs_inventoried$congenital ~"Congenital",
+                variables %in% all_list_names$mother ~"Mother",
+                variables %in% all_list_names$father ~"Father",
+                variables %in% all_list_names$educ ~"Education",
+                variables %in% all_list_names$income ~"Income",
+                variables %in% all_list_names$birth ~"Birth",
+                variables %in% all_list_names$civ_stat ~"Civil_Status",
+                variables %in% all_list_names$baseline ~"Baseline",
+                variables %in% all_list_names$PC ~"Principal Components",
+                variables %in% prs_inventoried$ld_pred ~"ldPred",
+                variables %in% all_list_names$patient ~"Patient mental illness"
+            )}
     
     output$table <- renderTable({
         selected_dataset() %>%
-            mutate(group_names = case_when(
-                variables %in% behavior ~"Behavior",
-                variables %in% lifestyle ~"Lifestyle",
-                variables %in% health ~"Health",
-                variables %in% mental ~"Mental",
-                variables %in% congenital ~"Congenital",
-                variables %in% mother ~"Mother",
-                variables %in% father ~"Father",
-                variables %in% educ ~"Education",
-                variables %in% income ~"Income",
-                variables %in% birth ~"Birth",
-                variables %in% civ_stat ~"Civil_Status",
-                variables %in% baseline ~"Baseline",
-                variables %in% PC ~"Principal Components",
-                variables %in% ld_pred ~"ldPred",
-                variables %in% patient ~"Patient mental illness"
-            ))
+            mutate(group_names = map_to_variable(variables))
     })
+    
+#    max_coef <- max(selected_dataset %>% ds))
     
     output$plot <- renderPlot({
         selected_dataset() %>%
-            mutate(group_names = case_when(
-                variables %in% behavior ~"Behavior",
-                variables %in% lifestyle ~"Lifestyle",
-                variables %in% health ~"Health",
-                variables %in% mental ~"Mental",
-                variables %in% congenital ~"Congenital",
-                variables %in% mother ~"Mother",
-                variables %in% father ~"Father",
-                variables %in% educ ~"Education",
-                variables %in% income ~"Income",
-                variables %in% birth ~"Birth",
-                variables %in% civ_stat ~"Civil_Status",
-                variables %in% baseline ~"Baseline",
-                variables %in% PC ~"Principal Components",
-                variables %in% ld_pred ~"ldPred",
-                variables %in% patient ~"Patient mental illness"
-            )) %>%
+            mutate(group_names = map_to_variable(variables)) %>%
             ggplot(aes(y = variables, color = group_names)) + 
             theme_classic() +
             geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
             geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
-            xlim(c(0, 3)) 
+            xlim(0, 3)
     })
 }
 

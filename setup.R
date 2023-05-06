@@ -15,8 +15,14 @@ invisible(sapply(package_list, function(x){library(x, character.only = T)}))
 
 read_from_excel <- function(input){
   sheets <- readxl::excel_sheets(input)
+  output <- map(sheets, function(x){(readxl::read_xlsx(input, sheet = x, col_names = T))})
+  unlist(output, recursive = F)
+}
+
+read_from_excel <- function(input, unlist = F){
+  sheets <- readxl::excel_sheets(input)
   output <- map(sheets, function(x){readxl::read_xlsx(input, sheet = x, col_names = T)})
-  output
+  if (unlist) unlist(output, recursive = F, use.names = T) else output
 }
 
 hash_index <- function(x){
