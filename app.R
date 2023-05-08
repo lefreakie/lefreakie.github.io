@@ -84,7 +84,6 @@ server <- function(input, output){
             outputted_dataset() %>%
 #            arrange(-group_names, -variables) %>%
             ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
-#            scale_y_discrete(breaks = c("a", "b")) + 
             theme_classic() +
             theme(legend.position = c(.9, .9)) +
             geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
