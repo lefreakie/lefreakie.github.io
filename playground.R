@@ -13,7 +13,7 @@ for (a in names(prs_inventoried)){
 }
 
 
-results <- test$results[3:30,]
+results <- test$results
 names(catnames)
 
 vec <- vector(mode = "character", length = length(var))
@@ -34,8 +34,8 @@ map(var, ~.x %in% unlist(catnames, use.names = F))
 
 results %>%
   rowwise(variables) %>%
-  summarize(group_names = if(!is_null(groupings_table[[variables]])) groupings_table[[variables]] else groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]]) %>%
-  print(n = 29)
+  mutate(group_names = if(!is_null(groupings[[variables]])) groupings[[variables]] else groupings[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]]) %>%
+  ungroup()
 
 results[[1]] %in% unlist(somatic_variable_names_with_baseline, use.names = F)
 
