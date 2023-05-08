@@ -96,13 +96,3 @@ server <- function(input, output){
 }
 
 shinyApp(ui, server)
-
-a <- hash_table[[c("behavior", "father")]]
-
-a <- a %>%
-  rowwise(variables) %>%
-  mutate(group_names = if(!is_null(groupings_table[[variables]])) groupings_table[[variables]] else groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]]) %>%
-  ungroup()
-
-factor(interaction(a$group_names, a$variables, drop = T), labels = a$group_names)
-
