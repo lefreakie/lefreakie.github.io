@@ -19,22 +19,38 @@ ui <- fluidPage(
                                selected = "behavior",
                                inline = T
                                )
+            
         ),
         mainPanel(
-            verbatimTextOutput("vars"),
-            plotOutput("plot", height = "700px"),
-            tableOutput("table")
+            #verbatimTextOutput("vars"),
+            #plotOutput("plot", height = "700px"),
+            #tableOutput("table"),
+          tabsetPanel(
+            type = "tab",
+            tabPanel("Plot", 
+                     conditionalPanel(condition = "input.tabset == 'Plot'", 
+                                      plotOutput("plot", height = "700px"))),
+            tabPanel("Table", 
+                     conditionalPanel(condition = "input.tabset == 'Table'", 
+                                      tableOutput("table"))),
+            tabPanel("Plot and Table", 
+                     conditionalPanel(condition = "input.tabset == 'Plot and Table'", 
+                                      plotOutput("plot_table", height = "350px"), 
+                                      tableOutput("table")))
+            )
         )
     )
 )
 
-server <- function(input, output){
+server <- function(input, output, session){
 
     selected_dataset <- reactive({
 #    return (eval(parse(text = input$dataset)))
       hash_table[[input$checkbox]]
         }
     )
+    
+
     
     map_to_variable2 <- function(variables){case_when(
       variables %in% prs_inventoried$behavior ~"Behavior",
@@ -62,14 +78,6 @@ server <- function(input, output){
       else groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]]
     }
     
-    output$table <- renderTable({
-        selected_dataset() %>%
-        #filter(.[,6] <= 0.05) %>%
-        rowwise(variables) %>%
-            mutate(group_names = map_to_variable(variables)) %>%
-        ungroup()
-    })
-  
     outputted_dataset <- function(){
       selected_dataset() %>%
         #filter(.[,6] <= 0.05) %>%
@@ -78,6 +86,20 @@ server <- function(input, output){
         ungroup()
     }
     
+    output$table <- renderTable({
+      if (input$tabset == "Table" || input$tabset == "Plot and Table") {
+        selected_dataset() %>%
+        filter(.[,6] <= 0.05) %>%
+        rowwise(variables) %>%
+            mutate(group_names = map_to_variable(variables)) %>%
+        ungroup()
+      } else {
+        NULL
+      }
+    })
+  
+    
+    
 #    max_coef <- max(selected_dataset %>% ds))
     
     make_factor_vars <- function(vars, groups){
@@ -85,8 +107,9 @@ server <- function(input, output){
     }
     
     output$plot <- renderPlot({
+      if (input$tabset == "Plot" || input$tabset == "Plot and Table") {
             outputted_dataset() %>%
-#            arrange(-group_names, -variables) %>%
+#           arrange(-group_names, -variables) %>%
             ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
             theme_classic() +
             ylab("Variables") +
@@ -94,10 +117,12 @@ server <- function(input, output){
             geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
             geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
-            geom_vline(xintercept = 1, linetype = "dashed") +
+            geom_vline(xintercept = 1, linetype = "dashed") 
             xlim(0, 3)
+      } else {
+        NULL
+      }
     })
-    
 }
 
 shinyApp(ui, server)
