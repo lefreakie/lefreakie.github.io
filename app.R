@@ -16,7 +16,8 @@ ui <- fluidPage(
                                label = "TEST",
                                choiceValues = names(all_list_names_no_baseline),
                                choiceNames = names(all_list_names_no_baseline),
-                               selected = "behavior"
+                               selected = "behavior",
+                               inline = T
                                )
         ),
         mainPanel(
@@ -63,6 +64,7 @@ server <- function(input, output){
     
     output$table <- renderTable({
         selected_dataset() %>%
+        #filter(.[,6] <= 0.05) %>%
         rowwise(variables) %>%
             mutate(group_names = map_to_variable(variables)) %>%
         ungroup()
@@ -70,6 +72,7 @@ server <- function(input, output){
   
     outputted_dataset <- function(){
       selected_dataset() %>%
+        #filter(.[,6] <= 0.05) %>%
         rowwise(variables) %>%
         mutate(group_names = as.factor(map_to_variable(variables))) %>%
         ungroup()
@@ -86,6 +89,7 @@ server <- function(input, output){
 #            arrange(-group_names, -variables) %>%
             ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
             theme_classic() +
+            ylab("Variables") +
             theme(legend.position = c(.9, .9)) +
             geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
             geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
@@ -97,3 +101,5 @@ server <- function(input, output){
 }
 
 shinyApp(ui, server)
+
+
