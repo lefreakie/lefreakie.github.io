@@ -15,7 +15,8 @@ ui <- fluidPage(
             checkboxGroupInput(inputId = "checkbox",
                                label = "TEST",
                                choiceValues = names(all_list_names_no_baseline),
-                               choiceNames = names(all_list_names_no_baseline)
+                               choiceNames = names(all_list_names_no_baseline),
+                               selected = "behavior"
                                )
         ),
         mainPanel(
