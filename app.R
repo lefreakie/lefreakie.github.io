@@ -22,27 +22,28 @@ ui <- fluidPage(
             
         ),
         mainPanel(
-            #verbatimTextOutput("vars"),
-            #plotOutput("plot", height = "700px"),
-            #tableOutput("table"),
-          tabsetPanel(
-            type = "tab",
-            tabPanel("Plot", 
-                     conditionalPanel(condition = "input.tabset == 'Plot'", 
-                                      plotOutput("plot", height = "700px"))),
-            tabPanel("Table", 
-                     conditionalPanel(condition = "input.tabset == 'Table'", 
-                                      tableOutput("table"))),
-            tabPanel("Plot and Table", 
-                     conditionalPanel(condition = "input.tabset == 'Plot and Table'", 
-                                      plotOutput("plot_table", height = "350px"), 
-                                      tableOutput("table")))
-            )
-        )
-    )
+            verbatimTextOutput("vars"),
+            plotOutput("plot", height = "700px"),
+            tableOutput
+            ("table")
+          # tabsetPanel(
+          #   id = "tabset",
+          #   tabPanel("Plot", 
+          #            conditionalPanel(condition = "input.tabset == 'Plot'", 
+          #                             plotOutput("plot", height = "700px"))),
+          #   tabPanel("Table", 
+          #            conditionalPanel(condition = "input.tabset == 'Table'", 
+          #                             tableOutput("table"))),
+          #   tabPanel("Plot and Table", 
+          #            conditionalPanel(condition = "input.tabset == 'Plot and Table'", 
+          #                             plotOutput("plot_table", height = "350px"), 
+          #                             tableOutput("table")))
+          )
+      )
 )
 
-server <- function(input, output, session){
+
+server <- function(input, output){
 
     selected_dataset <- reactive({
 #    return (eval(parse(text = input$dataset)))
@@ -87,15 +88,15 @@ server <- function(input, output, session){
     }
     
     output$table <- renderTable({
-      if (input$tabset == "Table" || input$tabset == "Plot and Table") {
+      #if (input$tabset == "Table" || input$tabset == "Plot and Table") {
         selected_dataset() %>%
-        filter(.[,6] <= 0.05) %>%
+        #filter(.[,6] <= 0.05) %>%
         rowwise(variables) %>%
-            mutate(group_names = map_to_variable(variables)) %>%
+        mutate(group_names = map_to_variable(variables)) %>%
         ungroup()
-      } else {
-        NULL
-      }
+      #} else {
+      #  NULL
+      #}
     })
   
     
@@ -107,7 +108,7 @@ server <- function(input, output, session){
     }
     
     output$plot <- renderPlot({
-      if (input$tabset == "Plot" || input$tabset == "Plot and Table") {
+      #if (input$tabset == "Plot" || input$tabset == "Plot and Table") {
             outputted_dataset() %>%
 #           arrange(-group_names, -variables) %>%
             ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
@@ -117,12 +118,13 @@ server <- function(input, output, session){
             geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
             geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
-            geom_vline(xintercept = 1, linetype = "dashed") 
+            geom_vline(xintercept = 1, linetype = "dashed") +
             xlim(0, 3)
-      } else {
-        NULL
-      }
+      #} else {
+      #  NULL
+      #}
     })
+
 }
 
 shinyApp(ui, server)

@@ -106,6 +106,8 @@ server <- function(input, output){
     
 }
 
+### Hvad
+
 shinyApp(ui, server)
 
 
