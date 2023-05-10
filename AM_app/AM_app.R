@@ -1,5 +1,5 @@
 source("setup.R")
-
+#q
 results_list <- read_rds("data/full_regression_list.Rds")
 all_list_names <- read_from_excel("data/all_list_names.xlsx", T)
 all_list_names_no_baseline <- read_rds("data/all_list_no_names.Rds")
@@ -13,7 +13,7 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
             checkboxGroupInput(inputId = "checkbox",
-                               label = "TEST",
+                               label = "Variables",
                                choiceValues = names(all_list_names_no_baseline),
                                choiceNames = names(all_list_names_no_baseline),
                                selected = "behavior",
@@ -23,6 +23,7 @@ ui <- fluidPage(
         mainPanel(
             verbatimTextOutput("vars"),
             tabsetPanel(
+            id = "myTabs",
               type = "tabs",
               tabPanel("Plot", plotOutput("plot", height = "700px")),
               tabPanel("Table", tableOutput("table")),
@@ -99,9 +100,30 @@ server <- function(input, output){
             xlim(0, 3)
     })
     
+    output$plot2 <- renderPlot({
+        outputted_dataset() %>%
+            ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
+            theme_classic() +
+            theme(legend.position = c(.9, .9)) +
+            ylab("") +
+            geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
+            geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2, size = 1) +
+            geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
+            geom_vline(xintercept = 1, linetype = "dashed") +
+            xlim(0, 3)
+    })
+    
+    output$table2 <- renderTable({
+        selected_dataset() %>%
+            rowwise(variables) %>%
+            mutate(group_names = map_to_variable(variables)) %>%
+            ungroup()
+    })
+    
     output$plot_table <- renderUI({
-        plotOutput("plot", height = "700px")
-        tableOutput("table")
+        conditionalPanel(condition = "input.myTabs == 'Plot and Table'",
+                         plotOutput("plot2", height = "700px"),
+                         tableOutput("table2"))
     })
     
 }
