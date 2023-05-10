@@ -27,11 +27,12 @@ ui <- fluidPage(
     mainPanel(
       verbatimTextOutput("vars"),
       tabsetPanel(
+        id = "myTabs",
         type = "tabs",
-        tabPanel("Plot", plotOutput("plot", height = "700px")),
+        tabPanel("Plot", plotOutput("plot")),
         tabPanel("Table", tableOutput("table")),
-        tabPanel("Plot and Table",
-                 uiOutput("plot_table"))
+        tabPanel("Plot and Table", uiOutput("plot_table")
+        )
       )
     )
   )
@@ -39,74 +40,78 @@ ui <- fluidPage(
 )
 
 
-server <- function(input, output){
-
-    selected_dataset <- reactive({
-#    return (eval(parse(text = input$dataset)))
-      hash_table[[input$checkbox]]
-        }
-    )
-    
-    map_to_variable2 <- function(variables){case_when(
-      variables %in% prs_inventoried$behavior ~"Behavior",
-      variables %in% prs_inventoried$lifestyle ~"Lifestyle",
-      variables %in% prs_inventoried$health ~"Health",
-      variables %in% prs_inventoried$mental ~"Mental",
-      variables %in% prs_inventoried$congenital ~"Congenital",
-      variables %in% all_list_names$mother ~"Mother",
-      variables %in% all_list_names$father ~"Father",
-      variables %in% all_list_names$educ ~"Education",
-      variables %in% all_list_names$income ~"Income",
-      variables %in% all_list_names$birth ~"Birth",
-      variables %in% all_list_names$civ_stat ~"Civil_Status",
-      variables %in% all_list_names$baseline ~"Baseline",
-      variables %in% all_list_names$PC ~"Principal Components",
-      variables %in% prs_inventoried$ld_pred ~"ldPred",
-      variables %in% all_list_names$patient ~"Patient mental illness"
-    )}
-    
-#    output$vars <- renderPrint(hash_table[[input$checkbox]])
-    
-    
-    map_to_variable <- function(variables){
-      if(!is_null(groupings_table[[variables]])) groupings_table[[variables]]
-      else groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]]
-    }
-    
-    output$table <- renderTable({
-        selected_dataset() %>%
-        rowwise(variables) %>%
-            mutate(group_names = map_to_variable(variables)) %>%
-        ungroup()
-    })
+server <- function(input, output, session){
   
-    outputted_dataset <- function(){
-      selected_dataset() %>%
-        rowwise(variables) %>%
-        mutate(group_names = as.factor(map_to_variable(variables))) %>%
-        ungroup()
-    }
-    
-#    max_coef <- max(selected_dataset %>% ds))
-    
-    make_factor_vars <- function(vars, groups){
-      factor(interaction(vars, groups, drop = T), labels = vars)
-    }
-    
-    output$plot <- renderPlot({
-            outputted_dataset() %>%
-#            arrange(-group_names, -variables) %>%
-            ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
-            theme_classic() +
-            theme(legend.position = c(.9, .9)) +
-            ylab("") +
-            geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
-            geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2, size = 1) +
-            geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
-            geom_vline(xintercept = 1, linetype = "dashed") +
-            xlim(0, 3)
-    })
-    
+  observe({
+    print(input$myTabs)
+  })
+  
+  selected_dataset <- reactive({
+    hash_table[[input$checkbox]]
+  })
+  
+  map_to_variable <- function(variables){
+    if(!is_null(groupings_table[[variables]])) groupings_table[[variables]]
+    else groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]]
+  }
+  
+  output$table <- renderTable({
+    selected_dataset() %>%
+      rowwise(variables) %>%
+      mutate(group_names = map_to_variable(variables)) %>%
+      ungroup()
+  })
+  
+  outputted_dataset <- function(){
+    selected_dataset() %>%
+      rowwise(variables) %>%
+      mutate(group_names = as.factor(map_to_variable(variables))) %>%
+      ungroup()
+  }
+  
+  make_factor_vars <- function(vars, groups){
+    factor(interaction(vars, groups, drop = T), labels = vars)
+  }
+  
+  output$plot <- renderPlot({
+    outputted_dataset() %>%
+      ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
+      theme_classic() +
+      theme(legend.position = c(.9, .9)) +
+      ylab("") +
+      geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
+      geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2, size = 1) +
+      geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
+      geom_vline(xintercept = 1, linetype = "dashed") +
+      xlim(0, 3)
+  })
+  
+  output$plot2 <- renderPlot({
+    outputted_dataset() %>%
+      ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), group = group_names, color = group_names)) + 
+      theme_classic() +
+      theme(legend.position = c(.9, .9)) +
+      ylab("") +
+      geom_point(aes(x = `exp(coef)`), shape = 15, size = 1) +
+      geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2, size = 1) +
+      geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
+      geom_vline(xintercept = 1, linetype = "dashed") +
+      xlim(0, 3)
+  })
+  
+  output$table2 <- renderTable({
+    selected_dataset() %>%
+      rowwise(variables) %>%
+      mutate(group_names = map_to_variable(variables)) %>%
+      ungroup()
+  })
+  
+  output$plot_table <- renderUI({
+    conditionalPanel(condition = "input.myTabs == 'Plot and Table'",
+                     plotOutput("plot2"),
+                     tableOutput("table2"))
+  })
+  
 }
 
 shinyApp(ui, server)
