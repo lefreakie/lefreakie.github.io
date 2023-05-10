@@ -19,19 +19,19 @@ ui <- fluidPage(
       checkboxGroupInput(inputId = "checkbox",
                          label = NULL,
                          choiceValues = names(all_list_names_no_baseline),
-                         choiceNames = names(all_list_names_no_baseline)
+                         choiceNames = names(all_list_names_no_baseline),
+                         selected = "behavior"
       )
     ),
     
     mainPanel(
-      fluidRow(
-        column(6,
-               verbatimTextOutput("vars"),
-               plotOutput("plot", height = "700px")
-        ),
-        column(6,
-               tableOutput("table")
-        )
+      verbatimTextOutput("vars"),
+      tabsetPanel(
+        type = "tabs",
+        tabPanel("Plot", plotOutput("plot", height = "700px")),
+        tabPanel("Table", tableOutput("table")),
+        tabPanel("Plot and Table",
+                 uiOutput("plot_table"))
       )
     )
   )
