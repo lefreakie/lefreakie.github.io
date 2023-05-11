@@ -125,9 +125,7 @@ server <- function(input, output) {
     output$plot <- renderPlot({
         outputted_dataset() %>%
             ggplot(aes(
-                y = factor(interaction(variables, group_names, drop = T), labels = variables),
-                group = group_names,
-                color = group_names
+                y = variables, color = group_names
             )) +
             theme_classic() +
             ylab("Variables") +
