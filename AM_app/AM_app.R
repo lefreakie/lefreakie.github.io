@@ -141,9 +141,9 @@ server <- function(input, output) {
     
     output$plot2 <- renderPlot({
         outputted_dataset() %>%
-            ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), 
-                       group = group_names,color = group_names
-                    #aes(y = variables, color = group_names
+            ggplot(#aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), 
+                #       group = group_names,color = group_names
+                    aes(y = variables, color = group_names
             )) +
             theme_classic() +
             ylab("Variables") +
@@ -168,7 +168,7 @@ server <- function(input, output) {
     
     output$plot_table <- renderUI({
         conditionalPanel(condition = "input.myTabs == 'Plot and Table'",
-                         plotOutput("plot2", height = "700px", width = "800px"),
+                         plotOutput("plot2", height = "700px", width = "1000px"),
                          tableOutput("table2"))
     })
 }
