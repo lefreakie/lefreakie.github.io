@@ -80,8 +80,6 @@ server <- function(input, output) {
         )
     }
     
-    
-    
     map_to_variable <- function(variables) {
         if (!is_null(groupings_table[[variables]]))
             groupings_table[[variables]]
@@ -141,8 +139,7 @@ server <- function(input, output) {
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
             xlim(0, 3) +
-            theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
-            guides(color = guide_legend(override.aes = list(shape = NA)))
+            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = Reported_trait_group))
     })
     
     output$plot2 <- renderPlot({
@@ -161,9 +158,7 @@ server <- function(input, output) {
             geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
-            xlim(0, 3) +
-            theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
-            guides(color = guide_legend(override.aes = list(shape = NA)))
+            xlim(0, 3) 
     })
 
     
