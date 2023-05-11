@@ -10,9 +10,11 @@ hash_table <- read_rds("data/hash_table.Rds")
 groupings_table <- read_rds("data/groupings_table.Rds")
 
 ui <- fluidPage(
-    sidebarPanel("Choice of variable"),
+    titlePanel(h1("Prediction of readmissions with Anorexia Nervosa", style = {'background-color: #092052; color: white; padding: 10px'})),
+    #sidebarPanel("Choice of variable"),
     sidebarLayout(
         sidebarPanel(
+            h2("Choice of Variable"),
             checkboxGroupInput(
                 inputId = "checkbox",
                 label = "Variables",
@@ -21,6 +23,7 @@ ui <- fluidPage(
                 selected = "behavior",
                 inline = T
             ),
+        h3("Choice of p-values"),
         radioButtons(
             inputId = "radiobuttons",
             label = NULL,
@@ -77,14 +80,16 @@ server <- function(input, output) {
             variables %in% all_list_names$PC ~ "Principal Components",
             variables %in% prs_inventoried$ld_pred ~ "ldPred",
             variables %in% all_list_names$patient ~ "Patient mental illness"
-        )
+        ) 
     }
     
     map_to_variable <- function(variables) {
         if (!is_null(groupings_table[[variables]]))
-            groupings_table[[variables]]
+            groupings_table[[variables]] %>% 
+            gsub("^(\\w)", "\\U\\1", ., perl = TRUE) 
         else
-            groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]]
+            groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]] %>% 
+            gsub("^(\\w)", "\\U\\1", ., perl = TRUE) 
     }
     
     
@@ -167,7 +172,6 @@ server <- function(input, output) {
                          tableOutput("table2"))
     })
 }
-
 
 shinyApp(ui, server)
 
