@@ -13,7 +13,7 @@ ui <- fluidPage(
   titlePanel(h1("Prediction of readmissions with Anorexia Nervosa", style = {'background-color: #092052; color: white; padding: 10px'})),
   
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(width = 2,
       tags$h3("Choice of variable"),
       tags$hr(style = {'margin: 0 0 20px 0;'}),
       checkboxGroupInput(inputId = "checkbox",
@@ -21,7 +21,13 @@ ui <- fluidPage(
                          choiceValues = names(all_list_names_no_baseline),
                          choiceNames = names(all_list_names_no_baseline),
                          selected = "behavior"
-      )
+      ),
+      tags$hr(style = {'margin: 20px 0 20px 0;'}),
+      radioButtons(inputId = "radiobuttons",
+                   label = NULL,
+                   choiceValues = list("all", "significant"),
+                   choiceNames = list("All p-values", "Significant p-values only"),
+                   selected = "all")
     ),
     
     mainPanel(
@@ -29,7 +35,7 @@ ui <- fluidPage(
       tabsetPanel(
         id = "myTabs",
         type = "tabs",
-        tabPanel("Plot", plotOutput("plot")),
+        tabPanel("Plot", plotOutput("plot", height=800)),
         tabPanel("Table", tableOutput("table")),
         tabPanel("Plot and Table", uiOutput("plot_table")
         )
@@ -42,13 +48,19 @@ ui <- fluidPage(
 
 server <- function(input, output, session){
   
-  observe({
-    print(input$myTabs)
+  selected_dataset <- reactive({
+    hash_table[[input$checkbox]] %>%
+      rename(pvalue = 6) %>%
+      {if(input$radiobuttons == "significant") {
+        filter(., pvalue <= 0.05)
+      } else {
+        .
+      }}
   })
   
-  selected_dataset <- reactive({
-    hash_table[[input$checkbox]]
-  })
+  # observe ({
+  #   print(hash_table[[input$checkbox]][6] )
+  # })
   
   map_to_variable <- function(variables){
     if(!is_null(groupings_table[[variables]])) groupings_table[[variables]]
