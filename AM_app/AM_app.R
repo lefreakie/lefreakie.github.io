@@ -34,7 +34,7 @@ ui <- fluidPage(
             tabsetPanel(
                 id = "myTabs",
                 type = "tabs",
-                tabPanel("Plot", plotOutput("plot", height = "700px")),
+                tabPanel("Plot", plotOutput("plot", height = "700px", width = "800px")),
                 tabPanel("Table", tableOutput("table")),
                 tabPanel("Plot and Table",
                          uiOutput("plot_table"))
@@ -117,15 +117,28 @@ server <- function(input, output) {
         factor(interaction(vars, groups, drop = T), labels = vars)
     }
     
-    # subgroups <- reactive({
-    #     factor(interaction(Reported_trait_group, variables), 
-    #            levels = paste(Reported_trait_group, variables))
-    # })
-    
     output$plot <- renderPlot({
         outputted_dataset() %>%
-            ggplot(aes(
-                y = variables, color = group_names
+            ggplot(aes(y = variables, color = group_names)) +
+            theme_classic() +
+            ylab("Variables") +
+            #theme(legend.position = c(.9, .9)) +
+            geom_point(aes(x = `exp(coef)`),
+                       shape = 15,
+                       size = 2) +
+            geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
+            geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
+            geom_vline(xintercept = 1, linetype = "dashed") +
+            xlim(0, 3) +
+            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = Reported_trait_group),
+                                     direction = "both")
+    })
+    
+    output$plot2 <- renderPlot({
+        outputted_dataset() %>%
+            ggplot(aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), 
+                       group = group_names,color = group_names
+                    #aes(y = variables, color = group_names
             )) +
             theme_classic() +
             ylab("Variables") +
@@ -139,25 +152,6 @@ server <- function(input, output) {
             xlim(0, 3) +
             ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = Reported_trait_group))
     })
-    
-    output$plot2 <- renderPlot({
-        outputted_dataset() %>%
-            ggplot(aes(
-                y = factor(interaction(variables, group_names, drop = T), labels = variables),
-                group = group_names,
-                color = group_names
-            )) +
-            theme_classic() +
-            ylab("Variables") +
-            #theme(legend.position = c(.9, .9)) +
-            geom_point(aes(x = `exp(coef)`),
-                       shape = 15,
-                       size = 2) +
-            geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
-            geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
-            geom_vline(xintercept = 1, linetype = "dashed") +
-            xlim(0, 3) 
-    })
 
     
     output$table2 <- renderTable({
@@ -169,7 +163,7 @@ server <- function(input, output) {
     
     output$plot_table <- renderUI({
         conditionalPanel(condition = "input.myTabs == 'Plot and Table'",
-                         plotOutput("plot2", height = "700px"),
+                         plotOutput("plot2", height = "700px", width = "800px"),
                          tableOutput("table2"))
     })
 }
