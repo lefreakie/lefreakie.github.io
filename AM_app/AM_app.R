@@ -113,14 +113,16 @@ server <- function(input, output) {
         outputted_dataset() #%>%
             #filter(.[, 6] <= 0.05)
     })
-    
-    
-    
-    #    max_coef <- max(selected_dataset %>% ds))
+
     
     make_factor_vars <- function(vars, groups) {
         factor(interaction(vars, groups, drop = T), labels = vars)
     }
+    
+    # subgroups <- reactive({
+    #     factor(interaction(Reported_trait_group, variables), 
+    #            levels = paste(Reported_trait_group, variables))
+    # })
     
     output$plot <- renderPlot({
         outputted_dataset() %>%
@@ -134,33 +136,36 @@ server <- function(input, output) {
             #theme(legend.position = c(.9, .9)) +
             geom_point(aes(x = `exp(coef)`),
                        shape = 15,
-                       size = 1) +
+                       size = 2) +
             geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
-            xlim(0, 3)
+            xlim(0, 3) +
+            theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+            guides(color = guide_legend(override.aes = list(shape = NA)))
     })
     
     output$plot2 <- renderPlot({
         outputted_dataset() %>%
             ggplot(aes(
                 y = factor(interaction(variables, group_names, drop = T), labels = variables),
-                group = Reported_trait_group,
+                group = group_names,
                 color = group_names
             )) +
             theme_classic() +
-            #theme(legend.position = c(.9, .9)) +
             ylab("Variables") +
+            #theme(legend.position = c(.9, .9)) +
             geom_point(aes(x = `exp(coef)`),
                        shape = 15,
-                       size = 1) +
-            geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`),
-                           height = .2,
-                           size = 1) +
+                       size = 2) +
+            geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
-            xlim(0, 3)
+            xlim(0, 3) +
+            theme(axis.text.y = element_blank(), axis.ticks.y = element_blank()) +
+            guides(color = guide_legend(override.aes = list(shape = NA)))
     })
+
     
     output$table2 <- renderTable({
         selected_dataset() %>%
@@ -176,7 +181,6 @@ server <- function(input, output) {
     })
 }
 
-### Hvad
 
 shinyApp(ui, server)
 
