@@ -9,39 +9,54 @@ prs_exp <- data.frame(read_from_excel("data/prs_explanatory.xlsx", T))
 hash_table <- read_rds("data/hash_table.Rds")
 groupings_table <- read_rds("data/groupings_table.Rds")
 
-ui <- fluidPage(sidebarPanel("Choice of variable"),
-                sidebarLayout(
-                    sidebarPanel(
-                        checkboxGroupInput(
-                            inputId = "checkbox",
-                            label = "Variables",
-                            choiceValues = names(all_list_names_no_baseline),
-                            choiceNames = names(all_list_names_no_baseline),
-                            selected = "behavior",
-                            inline = T
-                        )
-                    ),
-                    mainPanel(
-                        verbatimTextOutput("vars"),
-                        tabsetPanel(
-                            id = "myTabs",
-                            type = "tabs",
-                            tabPanel("Plot", plotOutput("plot", height = "700px")),
-                            tabPanel("Table", tableOutput("table")),
-                            tabPanel("Plot and Table",
-                                     uiOutput("plot_table"))
-                        )
-                    )
-                ))
+ui <- fluidPage(
+    sidebarPanel("Choice of variable"),
+    sidebarLayout(
+        sidebarPanel(
+            checkboxGroupInput(
+                inputId = "checkbox",
+                label = "Variables",
+                choiceValues = names(all_list_names_no_baseline),
+                choiceNames = names(all_list_names_no_baseline),
+                selected = "behavior",
+                inline = T
+            ),
+        radioButtons(
+            inputId = "radiobuttons",
+            label = NULL,
+            choiceValues = list("all", "significant"),
+            choiceNames = list("All p-values", "Significant p-values only"),
+            selected = "all")
+        ),
+        
+        mainPanel(
+            verbatimTextOutput("vars"),
+            tabsetPanel(
+                id = "myTabs",
+                type = "tabs",
+                tabPanel("Plot", plotOutput("plot", height = "700px")),
+                tabPanel("Table", tableOutput("table")),
+                tabPanel("Plot and Table",
+                         uiOutput("plot_table"))
+                )
+            )
+        )
+    )
 
 server <- function(input, output) {
     exp_groups <- reactive({
-        exp_data %>%
+        prs_exp %>%
             dplyr::select(-Reported_trait)
     })
     
     selected_dataset <- reactive({
-        hash_table[[input$checkbox]]
+        hash_table[[input$checkbox]] %>%
+            rename(pvalue = 6) %>%
+            {if(input$radiobuttons == "significant") {
+                filter(., pvalue <= 0.05)
+            } else {
+                .
+            }}
     })
     
     
@@ -79,7 +94,7 @@ server <- function(input, output) {
     outputted_dataset1 <- function() {
         #selected_data <- selected_dataset() %>%
         selected_dataset() %>%
-            filter(.[, 6] <= 0.05) %>%
+            #filter(.[, 6] <= 0.05) %>%
             rowwise(variables) %>%
             mutate(group_names = map_to_variable(variables)) %>%
             ungroup()
@@ -95,8 +110,8 @@ server <- function(input, output) {
     
     
     output$table <- renderTable({
-        outputted_dataset() %>%
-            filter(.[, 6] <= 0.05)
+        outputted_dataset() #%>%
+            #filter(.[, 6] <= 0.05)
     })
     
     
