@@ -1,6 +1,7 @@
 source("setup.R")
 
 results_list <- read_rds("data/full_regression_list.Rds")
+baseline_summary <- read_rds("data/baseline_summary.Rds")[[1]]
 
 hash_table <- read_rds("data/hash_table.Rds")
 groupings_table <- read_rds("data/groupings_table.Rds")
@@ -31,6 +32,9 @@ for (i in 1:2047){
   names(results_list[[i]]$names) <- NULL
   hash_table[[hash_index(result_names)]] <- results_list[[i]]$results
 }
+hash_table[[NULL]] <- as.data.frame(baseline_summary)
+
+hash_table[[NULL]]
 
 #write_rds(hash_table, "data/hash_table.Rds")
 #write_rds(groupings, "data/groupings_table.Rds")

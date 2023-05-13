@@ -27,6 +27,10 @@ for (i in seq(1, 2047, 89)){
   }
 }
 
+baseline_summary <- read_from_excel("data/baseline_summary.xlsx")
+
+write_rds(baseline_summary, "data/baseline_summary.Rds")
+read_rds("data/baseline_summary.Rds")
 # for tests:
 # 1 => test score
 # 2 => degrees of freedom
