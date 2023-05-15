@@ -32,13 +32,11 @@ ui <- fluidPage(
             selected = "all"
             ),
 
-         h3("Reported Traits"),
-         radioButtons(
-             inputId = "radiobutton",
-             label = NULL,
-             choiceValues = list("Name", "Group"),
-             choiceNames = list("Reported Trait Name", "Reported Trait Group"),
-             selected = "Group")
+        radioButtons(inputId = "radiobutton1",
+                     label = NULL,
+                     choiceValues = list("trait_group", "trait"),
+                     choiceNames = list("Reported trait group", "Reported trait name"),
+                     selected = "trait_group")
         ),
 
         mainPanel(
@@ -54,6 +52,8 @@ ui <- fluidPage(
             )
         )
     )
+
+
 
 server <- function(input, output) {
     exp_groups <- reactive({
@@ -121,15 +121,8 @@ server <- function(input, output) {
                       ~ ifelse(is.na(Reported_trait_group), group_names, .)) %>%
             mutate_at("Reported_trait",
                       ~ ifelse(is.na(Reported_trait), group_names, .))
-            # {if (input$radiobutton == "Group") {
-            #     select(. [10])
-            # } else
-            #     select(. [11])
-            # }
             
     })
-
-    
     
     output$table <- renderTable({
         outputted_dataset()
@@ -141,6 +134,12 @@ server <- function(input, output) {
     }
     
     output$plot <- renderPlot({
+        label_column <- if (input$radiobutton1 == "trait_group") {
+            outputted_dataset()$Reported_trait_group
+        } else {
+            outputted_dataset()$Reported_trait
+        } 
+        
         outputted_dataset() %>%
             ggplot(aes(y = variables, color = group_names)) +
             theme_classic() +
@@ -153,11 +152,17 @@ server <- function(input, output) {
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
             xlim(0, 3) +
-            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = input$radiobutton),
+            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = label_column),
                                      direction = "both")
     })
     
     output$plot2 <- renderPlot({
+        label_column <- if (input$radiobutton1 == "trait_group") {
+            outputted_dataset()$Reported_trait_group
+        } else {
+            outputted_dataset()$Reported_trait
+        } 
+        
         outputted_dataset() %>%
             ggplot(#aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), 
                 #       group = group_names,color = group_names
@@ -173,7 +178,7 @@ server <- function(input, output) {
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
             xlim(0, 3) +
-            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = input$radiobutton))
+            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = label_column))
     })
 
     
