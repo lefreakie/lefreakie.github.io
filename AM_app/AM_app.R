@@ -29,9 +29,18 @@ ui <- fluidPage(
             label = NULL,
             choiceValues = list("all", "significant"),
             choiceNames = list("All p-values", "Significant p-values only"),
-            selected = "all")
+            selected = "all"
+            ),
+
+         h3("Reported Traits"),
+         radioButtons(
+             inputId = "radiobutton",
+             label = NULL,
+             choiceValues = list("Name", "Group"),
+             choiceNames = list("Reported Trait Name", "Reported Trait Group"),
+             selected = "Group")
         ),
-        
+
         mainPanel(
             verbatimTextOutput("vars"),
             tabsetPanel(
@@ -48,8 +57,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
     exp_groups <- reactive({
-        prs_exp %>%
-            dplyr::select(-Reported_trait)
+        prs_exp
     })
     
     selected_dataset <- reactive({
@@ -60,6 +68,7 @@ server <- function(input, output) {
             } else {
                 .
             }}
+        
     })
     
     
@@ -103,18 +112,27 @@ server <- function(input, output) {
             ungroup()
     }
     
+    
     outputted_dataset <- reactive({
         left_join(outputted_dataset1(),
                   exp_groups(),
                   by = c("variables" = "id")) %>%
             mutate_at("Reported_trait_group",
-                      ~ ifelse(is.na(Reported_trait_group), group_names, .))
+                      ~ ifelse(is.na(Reported_trait_group), group_names, .)) %>%
+            mutate_at("Reported_trait",
+                      ~ ifelse(is.na(Reported_trait), group_names, .))
+            # {if (input$radiobutton == "Group") {
+            #     select(. [10])
+            # } else
+            #     select(. [11])
+            # }
+            
     })
+
     
     
     output$table <- renderTable({
-        outputted_dataset() #%>%
-            #filter(.[, 6] <= 0.05)
+        outputted_dataset()
     })
 
     
@@ -127,7 +145,7 @@ server <- function(input, output) {
             ggplot(aes(y = variables, color = group_names)) +
             theme_classic() +
             ylab("Variables") +
-            #theme(legend.position = c(.9, .9)) +
+            theme(legend.position = c(.9, .9)) +
             geom_point(aes(x = `exp(coef)`),
                        shape = 15,
                        size = 2) +
@@ -135,7 +153,7 @@ server <- function(input, output) {
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
             xlim(0, 3) +
-            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = Reported_trait_group),
+            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = input$radiobutton),
                                      direction = "both")
     })
     
@@ -147,7 +165,7 @@ server <- function(input, output) {
             )) +
             theme_classic() +
             ylab("Variables") +
-            #theme(legend.position = c(.9, .9)) +
+            theme(legend.position = c(.9, .9)) +
             geom_point(aes(x = `exp(coef)`),
                        shape = 15,
                        size = 2) +
@@ -155,7 +173,7 @@ server <- function(input, output) {
             geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
             geom_vline(xintercept = 1, linetype = "dashed") +
             xlim(0, 3) +
-            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = Reported_trait_group))
+            ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = input$radiobutton))
     })
 
     
