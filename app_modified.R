@@ -27,13 +27,7 @@ ui <- fluidPage(
                    label = NULL,
                    choiceValues = list("all", "significant"),
                    choiceNames = list("All p-values", "Significant p-values only"),
-                   selected = "all"),
-      
-      radioButtons(inputId = "radiobutton1",
-                   label = NULL,
-                   choiceValues = list("trait_group", "trait"),
-                   choiceNames = list("Reported trait Group", "Reported trait name"),
-                   selected = "trait_group")
+                   selected = "all")
     ),
     
     mainPanel(
