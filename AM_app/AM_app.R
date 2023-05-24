@@ -20,7 +20,7 @@ ui <- fluidPage(
                 label = "Variables",
                 choiceValues = names(all_list_names_no_baseline),
                 choiceNames = names(all_list_names_no_baseline),
-                selected = "behavior",
+                selected = "baseline",
                 inline = T
             ),
         h3("Choice of p-values"),
