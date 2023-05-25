@@ -25,6 +25,8 @@ Til projektet har vi brugt data fra et studie over anoreksiske patienter vha. St
 
 Til projektet er der blevet brugt en række variable inddelt i forskellige grupper i tre overordnede kategorier, som vi hhv. har kaldt `baseline`, `somatic` og `PRS`.
 
+[abc](plots.html)
+
 
 ### Baseline
 
