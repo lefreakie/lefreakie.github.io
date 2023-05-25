@@ -67,7 +67,7 @@ server <- function(input, output) {
                 filter(., pvalue <= 0.05)
             } else {
                 .
-            }}
+            }} 
         
     })
     
@@ -78,7 +78,7 @@ server <- function(input, output) {
             variables %in% prs_inventoried$lifestyle ~ "Lifestyle",
             variables %in% prs_inventoried$health ~ "Health",
             variables %in% prs_inventoried$mental ~ "Mental",
-            variables %in% prs_inventoried$congenital ~ "Congenital",
+            variables %in% prs_inventoried$congenital ~ "Miscellaneous",
             variables %in% all_list_names$mother ~ "Mother",
             variables %in% all_list_names$father ~ "Father",
             variables %in% all_list_names$educ ~ "Education",
@@ -104,9 +104,7 @@ server <- function(input, output) {
     
     
     outputted_dataset1 <- function() {
-        #selected_data <- selected_dataset() %>%
         selected_dataset() %>%
-            #filter(.[, 6] <= 0.05) %>%
             rowwise(variables) %>%
             mutate(group_names = map_to_variable(variables)) %>%
             ungroup()
@@ -164,10 +162,7 @@ server <- function(input, output) {
         } 
         
         outputted_dataset() %>%
-            ggplot(#aes(y = factor(interaction(variables, group_names, drop = T), labels = variables), 
-                #       group = group_names,color = group_names
-                    aes(y = variables, color = group_names
-            )) +
+            ggplot(aes(y = variables, color = group_names)) +
             theme_classic() +
             ylab("Variables") +
             theme(legend.position = c(.9, .9)) +
