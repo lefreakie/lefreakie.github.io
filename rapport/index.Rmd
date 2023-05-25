@@ -1,0 +1,118 @@
+---
+title: "Prediction of readmissions with Anorexia Nervosa - rapport"
+author: "Dataprojektgruppe"
+date: '02-06-2023'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, eval=TRUE, include=FALSE}
+source("setup.R")
+hash_table <- read_rds("data/hash_table.Rds")
+prs_explanatory <- read_from_excel("data/prs_explanatory.xlsx")[[1]]
+```
+
+# Data
+
+Til projektet har vi brugt data fra et studie over anoreksiske patienter vha. Statistikbanken fra Danmarks Statistik. Det oprindelige datasæt indeholder information på 58076 personer, hvoraf 7774 er diagnosticeret med anoreksi, hvilket er dem af interesse i projektet. Af disse følger vi kun personer diagnosticeret efter 6-årsalderen, hvilket giver en casegruppe på 7759 personer. Endeligt var der ufuldstændig data på bl.a. PRS'er på 648 personer, hvilket giver et endeligt antal på 7111 personer. Til Cox-modellen er der registreret 1674 genindlæggelser som events, dvs. ca `r round(1674/7111*100, 2)`% blev genindlagt i løbet af perioden de følges.
+
+## Variable
+
+Til projektet er der blevet brugt en række variable inddelt i forskellige grupper i tre overordnede kategorier, som vi hhv. har kaldt `baseline`, `somatic` og `PRS`.
+
+
+### Baseline
+
+```{r message=FALSE, eval=TRUE, include=FALSE}
+baseline_table <- tibble(Variabel = c(paste("PC", 1:5, sep = ""),
+                                      paste("prs_ldpred2", c("ADHD", "Ano", "ASD", "BP", "MDD", "SCZ"), sep = "_"),
+                                      paste("P", c("Skizofreni", "ASD", "Bipolar", "MDD", "ADHD"), sep = "_"),
+                                      "Anbragt",
+                                      "gender",
+                                      "Somatisk_sygdom",
+                                      "first_alder"),
+       Forklaring = c(rep("Principal Component", 5),
+                      paste("PRS udregnet via LDpred2 for ", c("ADHD", "anoreksi", "Asperger", "bipolær", "depressive", "skizofreni"), "-diagnoser", sep = ""),
+                      paste("Binær indikator for, om patienten har en ", c("ADHD", "Asperger", "bipolær", "depressive", "skizofreni"), "-diagnose udover anoreksi", sep = ""),
+                      "Om patienten har været anbragt på en offentlig institution før kontakt",
+                      "Binær indikator for personens køn - 1 er mand",
+                      "Om patienten har været indlagt for somatiske (ikke-psykiske) sygdomme før kontakt",
+                      "Patientens alder ved kontakt"))
+```
+
+Baseline-kategorien udgør de variable, som vi har vurderet som af særlig interesse eller meget sandsynlig til at påvirke risikoen for genindlæggelse og er derfor inkluderet i alle regressionerne.
+
+Det inkluderer:
+
+* De 5 største principal components for patienterne i studiet.
+    + Dette kontrollerer for genetikken i forskellige befolkningsgrupper; dvs. genetiske forskelle for PRS'er indsamlet på danskere og ikke-danskere (f.eks. er engelske studier inkluderet) korrigeres for.
+* Polygeniske scorer ved LDpred2.
+    + Dvs. en fast PRS udregnet for seks forskellige diagnoser.
+* Indikatorvariable for seks forskellige diagnoser.
+* Om personen har været anbragt i en offentlig institution før 6-årsalderen.
+* Personens køn.
+* Om patienten har været indlagt for en ikke-psykisk sygdom før kontakt, dvs. potentielle traumatiske oplevelser.
+* Patientens alder ved kontakt.
+
+```{r echo=FALSE}
+reactable(baseline_table)
+```
+
+### Somatic
+
+```{r message=FALSE, eval=TRUE, include=FALSE}
+somatic_table <- tibble(Variabel = c(paste("F", c("ASD", "Anoreksi", "Skizofreni", "Bipolar", "MDD", "ADHD"), sep = "_"),
+                                     paste("M", c("ASD", "Anoreksi", "Skizofreni", "Bipolar", "MDD", "ADHD"), sep = "_"),
+                                     paste("highest_education", c("maternal", "paternal"), "3cat", sep= "_"),
+                                     paste("income", c("maternal", "paternal"), "quintiles", sep = "_"),
+                                     "vaegt_barn",
+                                     "gestationsalder_begge",
+                                     "apgarscore_efter5minutter",
+                                     "mors_alder_begge",
+                                     "civ_stat"),
+                        Kategori = c(rep("Father", 6), rep("Mother", 6), rep("Educ", 2), rep("Income", 2), rep("Birth", 4), "Civil status")
+                        )
+```
+
+Disse variable indeholder variable inddelt i følgende grupper:
+
+* Diagnoser tilhørende patientens far
+* Diagnoser tilhørende patientents mor
+* Kategoriske variable for forældrenes uddannelsesniveauer
+* Kategoriske variable for forældrenes indkomster
+* Variable relaterende til fødslen
+* Patientens civilstatus ved kontakt
+
+```{r echo=FALSE}
+reactable(somatic_table)
+```
+
+
+Af disse blev `M_ASD`, `F_Anoreksi` og `F_ASD` udelukket, da de havde nul varians (evt. manglende data).
+
+## PRS
+
+Til projektet har vi blandt andet fået adgang til følgende PRS-variable:
+
+```{r echo=FALSE}
+reactable(prs_explanatory)
+```
+
+Af disse er `phen57` blevet udelukket, da den er identisk med en af de øvrige PRS'er.
+
+# bbabab
+
+```{r echo=FALSE}
+reactable(hash_table[[NULL]])
+
+knitr::kable(hash_table[[NULL]])
+
+knitr::kable(hash_table[[c("behavior", "mental", "health", "father", "income")]], digits = 2)
+
+reactable(hash_table[["behavior"]])
+```
