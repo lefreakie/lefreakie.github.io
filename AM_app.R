@@ -153,6 +153,7 @@ server <- function(input, output) {
       ggplot(aes(y = variables, color = group_names)) +
       theme_classic() +
       ylab("Variables") +
+      xlab("Hazard Ratio") +
       #theme(legend.position = c(.9, .9)) +
       geom_point(aes(x = `exp(coef)`),
                  shape = 15,
