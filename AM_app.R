@@ -19,7 +19,8 @@ ui <- fluidPage(
         inputId = "checkbox",
         label = "Variables",
         choiceValues = names(all_list_names_no_baseline),
-        choiceNames = names(all_list_names_no_baseline),
+        choiceNames = list("Behavior", "Lifestyle", "Health", "Miscellaneous", "Mental", 
+                           "Father", "Mother", "Education", "Income", "Birth", "Civil Status"),
         selected = "baseline",
         inline = T
       ),
@@ -68,7 +69,6 @@ server <- function(input, output) {
       } else {
         .
       }}
-    
   })
   
   
@@ -104,9 +104,7 @@ server <- function(input, output) {
   
   
   outputted_dataset1 <- function() {
-    #selected_data <- selected_dataset() %>%
     selected_dataset() %>%
-      #filter(.[, 6] <= 0.05) %>%
       rowwise(variables) %>%
       mutate(group_names = map_to_variable(variables)) %>%
       ungroup()
@@ -120,9 +118,20 @@ server <- function(input, output) {
       mutate_at("Reported_trait_group",
                 ~ ifelse(is.na(Reported_trait_group), group_names, .)) %>%
       mutate_at("Reported_trait",
-                ~ ifelse(is.na(Reported_trait), group_names, .))
+                ~ ifelse(is.na(Reported_trait), group_names, .)) %>% 
+      mutate(variables = recode(variables, "gender" = "Male", "P_Skizofreni" = "Schizophrenia", 
+                                "P_MDD" = "Major Depressive Disorder", "P_Bipolar" = "Bipolar disorder",
+                                "first_alder" = "Age at admission", "Anbragt" = "Removed from home",
+                                "Somatisk_sygdom" = "Somatic disease", 
+                                "civ_stat" = "Mother in a committed relationsship",
+                                "apgarscore_efter5minutter" = "Having an apgarscore at 10",
+                                "gestationsalder_dage2" = "Born before term",
+                                "gestationsalder_dage3" = "Born after term")) %>% 
+      mutate(group_names = recode(group_names, "Civ_stat" = "Civil Status",
+                                  "PC" = "Principal Components"))
     
   })
+  
   
   output$table <- renderTable({
     outputted_dataset()
@@ -144,10 +153,11 @@ server <- function(input, output) {
       ggplot(aes(y = variables, color = group_names)) +
       theme_classic() +
       ylab("Variables") +
-      theme(legend.position = c(.9, .9)) +
+      #theme(legend.position = c(.9, .9)) +
       geom_point(aes(x = `exp(coef)`),
                  shape = 15,
                  size = 2) +
+      labs(color = "Groups") +
       geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
       geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
       geom_vline(xintercept = 1, linetype = "dashed") +
@@ -170,7 +180,7 @@ server <- function(input, output) {
         )) +
       theme_classic() +
       ylab("Variables") +
-      theme(legend.position = c(.9, .9)) +
+      #theme(legend.position = c(.9, .9)) +
       geom_point(aes(x = `exp(coef)`),
                  shape = 15,
                  size = 2) +
@@ -183,10 +193,7 @@ server <- function(input, output) {
   
   
   output$table2 <- renderTable({
-    selected_dataset() %>%
-      rowwise(variables) %>%
-      mutate(group_names = map_to_variable(variables)) %>%
-      ungroup()
+    outputted_dataset() 
   })
   
   output$plot_table <- renderUI({
