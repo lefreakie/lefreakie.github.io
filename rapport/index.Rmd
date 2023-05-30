@@ -1,14 +1,18 @@
 ---
 title: "Prediction of readmissions with Anorexia Nervosa - rapport"
 author: "Dataprojektgruppe"
-date: '02-06-2023'
-output: html_document
+output:
+  flexdashboard::flex_dashboard:
+    vertical_layout: scroll
+    orientation: rows
+    storyboard: false
 editor_options: 
   chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+options(warn=-1)
 ```
 
 ```{r message=FALSE, eval=TRUE, include=FALSE}
@@ -17,16 +21,19 @@ hash_table <- read_rds("data/hash_table.Rds")
 prs_explanatory <- read_from_excel("data/prs_explanatory.xlsx")[[1]]
 ```
 
-# Data
+# Introduktion
 
 Til projektet har vi brugt data fra et studie over anoreksiske patienter vha. Statistikbanken fra Danmarks Statistik. Det oprindelige datasæt indeholder information på 58076 personer, hvoraf 7774 er diagnosticeret med anoreksi, hvilket er dem af interesse i projektet. Af disse følger vi kun personer diagnosticeret efter 6-årsalderen, hvilket giver en casegruppe på 7759 personer. Endeligt var der ufuldstændig data på bl.a. PRS'er på 648 personer, hvilket giver et endeligt antal på 7111 personer. Til Cox-modellen er der registreret 1674 genindlæggelser som events, dvs. ca `r round(1674/7111*100, 2)`% blev genindlagt i løbet af perioden de følges.
 
-## Variable
+##
+
+dsadsa
+
+# Variable
 
 Til projektet er der blevet brugt en række variable inddelt i forskellige grupper i tre overordnede kategorier, som vi hhv. har kaldt `baseline`, `somatic` og `PRS`.
 
 [abc](plots.html)
-
 
 ### Baseline
 
@@ -49,6 +56,7 @@ baseline_table <- tibble(Variabel = c(paste("PC", 1:5, sep = ""),
 
 Baseline-kategorien udgør de variable, som vi har vurderet som af særlig interesse eller meget sandsynlig til at påvirke risikoen for genindlæggelse og er derfor inkluderet i alle regressionerne.
 
+
 Det inkluderer:
 
 * De 5 største principal components for patienterne i studiet.
@@ -61,9 +69,13 @@ Det inkluderer:
 * Om patienten har været indlagt for en ikke-psykisk sygdom før kontakt, dvs. potentielle traumatiske oplevelser.
 * Patientens alder ved kontakt.
 
+#### Oversigt over baseline-variable
+
 ```{r echo=FALSE}
 reactable(baseline_table)
 ```
+
+### {-}
 
 ### Somatic
 
@@ -90,16 +102,21 @@ Disse variable indeholder variable inddelt i følgende grupper:
 * Variable relaterende til fødslen
 * Patientens civilstatus ved kontakt
 
+#### Somatiske variable 
+
 ```{r echo=FALSE}
 reactable(somatic_table)
 ```
 
-
 Af disse blev `M_ASD`, `F_Anoreksi` og `F_ASD` udelukket, da de havde nul varians (evt. manglende data).
 
-## PRS
+### {-}   
+
+### PRS
 
 Til projektet har vi blandt andet fået adgang til følgende PRS-variable:
+
+#### Oversigt over PRS-variable
 
 ```{r echo=FALSE}
 reactable(prs_explanatory)
@@ -107,14 +124,159 @@ reactable(prs_explanatory)
 
 Af disse er `phen57` blevet udelukket, da den er identisk med en af de øvrige PRS'er.
 
-# bbabab
+### {-}
 
-```{r echo=FALSE}
-reactable(hash_table[[NULL]])
+##
+# Plots og tabeller
 
-knitr::kable(hash_table[[NULL]])
+Vi har udvalgt nogle enkelte resultater som eksempel på projektet. Til hvert resultat, bestående af forskellige kombinationer af variable, er der et plot og en tilhørende tabel med resultaterne. I det endelige produkt kan man vælge mellem kun de signifikante eller alle estimater i regressionen, men til visualiseringerne her viser vi kun de signifikante variable.
 
-knitr::kable(hash_table[[c("behavior", "mental", "health", "father", "income")]], digits = 2)
+### Resultater
 
-reactable(hash_table[["behavior"]])
+```{r echo=FALSE, include=FALSE, message=FALSE}
+hash_table <- read_rds("data/hash_table.Rds")
+all_list_names_no_baseline <- read_rds("data/all_list_no_names.Rds")
+groupings_table <- read_rds("data/groupings_table.Rds")
+prs_explanatory <- read_from_excel("data/prs_explanatory.xlsx")[[1]]
+results_list <- read_rds("data/full_regression_list.Rds")
+
+fuckyou <- function(input = NULL){
+
+map_to_variable <- function(variables) {
+  if (!is_null(groupings_table[[variables]]))
+    groupings_table[[variables]] %>% 
+    gsub("^(\\w)", "\\U\\1", ., perl = TRUE) 
+  else
+    groupings_table[[str_replace(variables, "(.*[a-z|A-Z]+)[0-9]$", "\\1")]] %>% 
+    gsub("^(\\w)", "\\U\\1", ., perl = TRUE) 
+}
+
+dataset <- hash_table[[input]] %>% rowwise(variables) %>%
+      mutate(group_names = map_to_variable(variables)) %>%
+      ungroup()
+
+exp_groups <- left_join(dataset,
+              prs_explanatory,
+              by = c("variables" = "id"))
+
+
+dataset <- exp_groups %>%
+      mutate_at("Reported_trait_group",
+                ~ ifelse(is.na(Reported_trait_group), group_names, .)) %>%
+      mutate_at("Reported_trait",
+                ~ ifelse(is.na(Reported_trait), group_names, .))
+dataset
+}
+
+plotit <- function(input =NULL){
+  fuckyou(input) %>%
+    filter(`Pr(>|z|)` <= 0.05) %>%
+    ggplot(aes(y = variables, color = group_names)) +
+      theme_classic() +
+      ylab("Variables") +
+      theme(legend.position = c(.9, .9)) +
+      geom_point(aes(x = `exp(coef)`),
+                 shape = 15,
+                 size = 2) +
+      geom_errorbarh(aes(xmin = `lower .95`, xmax = `upper .95`), height = .2) +
+      geom_linerange(aes(xmin = `lower .95`, xmax = `upper .95`)) +
+      geom_vline(xintercept = 1, linetype = "dashed") +
+      xlim(0, 3) +
+      ggrepel::geom_text_repel(aes(x = `exp(coef)`, label = `Reported_trait_group`),
+                               direction = "both")
+
+  
+}
+
+make_reactable <- function(input){reactable(input %>%
+  filter(`Pr(>|z|)` <= 0.05) %>%
+  mutate_if(is_numeric, partial(round, digits=2)))}
 ```
+
+## {data-height=50}
+
+####
+
+Første eksempel er den mindste model som kun indeholder de variable vi har defineret som `baseline`, dvs. de variable som vi har vurderet mest interessant. Det viser sig, at mange af disse variable går igen i næsten alle regressioner.
+
+##
+
+### Plot
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+plotit(NULL)
+```
+
+### Tabel
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+make_reactable(hash_table[[NULL]])
+```
+
+## {data-height=50}
+
+####
+
+Dette eksempel er den fulde model, dvs. alle 11 kategorier af variable er inkluderet i regressionen. Selv med næsten 400 genetiske variable ser vi igen mange af de variable, som indgår i den mindste model.
+
+##
+
+### Plot
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+plotit(names(all_list_names_no_baseline))
+```
+
+### Tabel
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+make_reactable(hash_table[[names(all_list_names_no_baseline)]])
+
+```
+
+## {data-height=50}
+
+####
+
+Her har vi en regression med alle PRS'erne inkluderet. Bemærk her igen, hvor mange variable fra `baseline` er signifikante ligesom foroven.
+
+##
+
+### Plot
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+plotit(c("behavior", "lifestyle", "health", "congenital", "mental"))
+```
+
+### Tabel
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+make_reactable(hash_table[[c("behavior", "lifestyle", "health", "congenital", "mental")]])
+```
+
+## {data-height=50}
+
+####
+
+Sidste eksempel inkluderer ingen ekstra genetiske variable, men kun dem vi har kaldt `somatic`, dvs. dem udarbejdet fra registerdata. Det viser sig, at ved $\alpha = 0.05$, ingen af disse i modellen er signifikante, og kun variable fra `baseline` er signifikante.
+
+##
+
+### Plot
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+plotit(setdiff(names(all_list_names_no_baseline), c("behavior", "lifestyle", "health", "congenital", "mental")))
+```
+
+### Tabel
+
+```{r echo=FALSE, include=TRUE, message=FALSE}
+make_reactable(hash_table[[setdiff(names(all_list_names_no_baseline), c("behavior", "lifestyle", "health", "congenital", "mental"))]])
+```
+
+##
+
+```{r include=FALSE}
+options(warn=0)
+```
+

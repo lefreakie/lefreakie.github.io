@@ -1,4 +1,4 @@
-package_list = c("tidyverse", "usethis", "r2r", "shiny", "reactable")
+package_list <- c("tidyverse", "usethis", "r2r", "shiny", "reactable", "ggrepel", "flexdashboard")
 
 `%!in%` <- Negate(`%in%`)
 
