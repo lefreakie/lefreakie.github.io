@@ -32,7 +32,7 @@ ui <- fluidPage(
         choiceNames = list("All p-values", "Significant p-values only"),
         selected = "all"
       ),
-      
+      h3("Group or name of reported trait"),
       radioButtons(inputId = "radiobutton1",
                    label = NULL,
                    choiceValues = list("trait_group", "trait"),
@@ -128,7 +128,8 @@ server <- function(input, output) {
                                 "gestationsalder_dage2" = "Born before term",
                                 "gestationsalder_dage3" = "Born after term")) %>% 
       mutate(group_names = recode(group_names, "Civ_stat" = "Civil Status",
-                                  "PC" = "Principal Components"))
+                                  "PC" = "Principal Components",
+                                  "Congenital" = "Miscellaneous"))
     
   })
   
