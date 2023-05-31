@@ -21,19 +21,48 @@ hash_table <- read_rds("data/hash_table.Rds")
 prs_explanatory <- read_from_excel("data/prs_explanatory.xlsx")[[1]]
 ```
 
-# Introduktion
+# Introduktion og model
 
-Til projektet har vi brugt data fra et studie over anoreksiske patienter vha. Statistikbanken fra Danmarks Statistik. Det oprindelige datasæt indeholder information på 58076 personer, hvoraf 7774 er diagnosticeret med anoreksi, hvilket er dem af interesse i projektet. Af disse følger vi kun personer diagnosticeret efter 6-årsalderen, hvilket giver en casegruppe på 7759 personer. Endeligt var der ufuldstændig data på bl.a. PRS'er på 648 personer, hvilket giver et endeligt antal på 7111 personer. Til Cox-modellen er der registreret 1674 genindlæggelser som events, dvs. ca `r round(1674/7111*100, 2)`% blev genindlagt i løbet af perioden de følges.
+$$\begin{aligned}
+&\text{Hans Christian Hansen}\;&(202005922)\\
+&\text{Anne-Mette Hartved Dahl}\;&(201807410)\\
+&\text{Morten Skovbjerg}\;&(202108037)\\
+&\text{Carrie Susanne Lovejoy}\;&(202106470)\end{aligned}$$
+
+Projektet har haft til formål at modellere/forudsige risikoen for genindlæggelse i psykiatrien efter kontakt (stillet diagnose) for personer diagnosticeret med anorexia nervosa. Til det formål har vi lavet en overlevelsesanalyse over patienternes genindlæggelsesrate, baseret på antal dage siden kontakt, og grundet et højt antal potentielt irrelevante variable, brugt LASSO til modelselektion. Et andet formål har været at kunne visualisere og tyde, om og hvis i så fald hvor meget forskellige undermodeller varierer mellem hinanden.
+
+Til projektet har vi brugt data fra et studie over anoreksiske patienter vha. Statistikbanken fra Danmarks Statistik (DST). Det oprindelige datasæt indeholder information på 58076 personer, hvoraf 7774 er diagnosticeret med anoreksi, hvilket er dem af interesse i projektet. Af disse følger vi kun personer diagnosticeret efter 6-årsalderen, hvilket giver en casegruppe på 7759 personer. Endeligt var der ufuldstændig data på bl.a. PRS'er på 648 personer, hvilket giver et endeligt antal på 7111 personer. Til Cox-modellen er der registreret 1674 genindlæggelser som events, dvs. ca `r round(1674/7111*100, 2)`% blev genindlagt i løbet af perioden de blev fulgt.
+
+Dertil indeholder vores datasæt ca. 440 variable baseret på register- og gendata tilgængelig gennem DST og NCRR på AU. En særlig begrænsning ved projektet er at, da vi har med personhenførbar data at gøre, er vores output begrænset til summary data (nærmere sagt regregressionsdata).
+
+### Model og metode
+
+Da vores analyse er interesseret i risikoen for genindlæggelse for anoreksipatienterne, har vi anvendt en overlevelsesanalysemodel kaldet [Cox-modellen](https://en.wikipedia.org/wiki/Proportional_hazards_model) til at estimere risikofaktoren for genindlæggelse for variablene. Koefficienter større end én betyder, at variablen er associeret med en højere genindlæggelsesrate, mens det modsatte gælder for koefficienter mindre end én. Formålet med modellen er her så, at identificere de faktorer som medfører den største eller mindste risiko for genindlæggelse.
+
+Da vi i vores analyse har mange variable der kan have tvivlsom relevans for at forudsige anoreksi (og for genetiske variable er det endnu mere uklart, hvilke det skulle være), har vi anvendt LASSO-regularisering (ligning (4.20) i Reich, s. 128) på modellen til feature selection. LASSO ligner meget Ridge, som vi har set til forelæsningerne, dog udstyret med en anden norm til regulariseringsleddet. Dvs. koefficienterne estimeres ved
+
+
+$$\hat{\beta}_{\text{LASSO}} = \underset{\beta}{\arg\min} \sum_{i=1}^n (Y_i - \sum_{j=1}^p X_{ij}\beta_j)^2 + \lambda \sum_{j=1}^p |\beta_j|$$
+
+I modsætning til Ridge, tvinger LASSO de mindst betydende koefficienter mod 0, hvilket netop er hvad vi ønsker for vores datasæt.
+
+På grund af begrænsninger med vores softwarepakker i R har vi ikke kunnet få estimater ud samtidigt med modelselektionen i LASSO, altså vi har været nødt til at køre to regressioner; den første til at udvælge variable fra LASSO og den sidste til at fitte de resulterende estimater.
+
+#### Regressioner
+
+Et af formålene med projektet har også været at se, om forskellige undermodeller prædikterer ens, og om dette kan visualiseres let. Til det formål har vi inddelt vores data (se siden "Data og variable") i 11 input-grupper og lavet regressioner på hver kombination af disse, hvilket giver i alt $2^{11} = 2048$ forskellige regressioner.
+
+### Det endelige produkt
+
+Det endelige produkt (vises til eksamen) er en interaktiv Shiny-app der viser vores analyser hvori man frit og let kan se regressionsresultaterne på forskellige undermodeller af vores datasæt, inddelt i forskellige kategoriseringer af variable, ved hjælp af forest-plots med et visuelt intuitivt layout.
+
+På grund af tekniske begrænsninger med måden, vi har udarbejdet det endelige produkt på, er siderne her primært en redegørelse for det overordnede arbejde. Til selve eksamen kan vi præsentere det interaktive led af selve produktet.
 
 ##
 
-dsadsa
-
-# Variable
+# Data og variable
 
 Til projektet er der blevet brugt en række variable inddelt i forskellige grupper i tre overordnede kategorier, som vi hhv. har kaldt `baseline`, `somatic` og `PRS`.
-
-[abc](plots.html)
 
 ### Baseline
 
@@ -95,12 +124,12 @@ somatic_table <- tibble(Variabel = c(paste("F", c("ASD", "Anoreksi", "Skizofreni
 
 Disse variable indeholder variable inddelt i følgende grupper:
 
-* Diagnoser tilhørende patientens far
-* Diagnoser tilhørende patientents mor
-* Kategoriske variable for forældrenes uddannelsesniveauer
-* Kategoriske variable for forældrenes indkomster
-* Variable relaterende til fødslen
-* Patientens civilstatus ved kontakt
+* Diagnoser tilhørende patientens far (`Father`)
+* Diagnoser tilhørende patientents mor (`Mother`)
+* Kategoriske variable for forældrenes uddannelsesniveauer (`Educ`)
+* Kategoriske variable for forældrenes indkomster (`Income`) 
+* Variable relaterende til fødslen (`Birth`), herunder fødselsvægt, gestationsalder og apgar-scorer (fødselstest for hvor godt en nyføst har klarert fødslen)
+* Patientens civilstatus ved kontakt (`Civil Status`)
 
 #### Somatiske variable 
 
@@ -110,9 +139,13 @@ reactable(somatic_table)
 
 Af disse blev `M_ASD`, `F_Anoreksi` og `F_ASD` udelukket, da de havde nul varians (evt. manglende data).
 
+Af disse variable har vi inddelt PRS-variablene 
+
 ### {-}   
 
 ### PRS
+
+PRS’er (polygenic risk scores) er numeriske variable udregnet baseret på genetisk data på patienterne og befolkningsgrupper. Det er standardnormalfordelte variable som afspejler hvor stærkt patienten er associeret med forskellige personligheds- eller fysiske træk, risici for sygdomme eller andre idiomatiske træk. I analysen er de vigtige, idet de kan hjælpe med at forklare genetiske risikofaktorer for f.eks. anoreksi.
 
 Til projektet har vi blandt andet fået adgang til følgende PRS-variable:
 
@@ -124,7 +157,24 @@ reactable(prs_explanatory)
 
 Af disse er `phen57` blevet udelukket, da den er identisk med en af de øvrige PRS'er.
 
-### {-}
+Til analysens formål har vi inddelt variablene i yderligere underkategorier (nogenlunde gjort ad-hoc):
+
+* Personlighedsrelaterede adfærdsmønstre (`Behavior`)
+* Livsstilsbaserede adfærdsmønstre (`Lifestyle`)
+* Relateret til helbred (`Health`)
+* Mentalt helbred (`Mental`)
+* Diverse eller uden for kategori (`Miscellaneous`)
+
+Det skal dog understreges, at variablenes inddeling er baseret på skøn og ikke nødvendigvis afspejler korrekte kategoriseringer.
+
+### Resultater
+
+For langt de fleste undermodeller, vi har inspiceret (se evt. siden "Plots og tabeller"), har tidligere somatiske sygdomme, skizofrenidiagnoser, PRS'er for anoreksi, alder ved stillet diagnose og om patienten har været anbragt vist sig at være de mest konsistent signifikante variable. Især skizofreni og at have været anbragt har prædikteret en meget høj risiko for genindlæggelse, hvilket evt. kan forklares ved at disse patienter har en evt. mere sårbar psyke end de øvrige patienter og udgør en lille sample size.
+Interessant ved alle disse variable er dog, at de alle er inkluderet i `baseline`, altså var vores formodning om, at disse variable kunne have betydning, formentligt korrekt.
+
+Af genetisk data ses det generelt, at variable som relaterer til f.eks. kolesteroltal, spisevaner eller hals-/mundrelaterede er signifikante i de fleste modeller. Interessant nok er PRS-variable for mentalt helbred sjældent signifikante medmindre man *ikke* kontrollerer for fysisk helbred, hvilket strider imod vores intuition. Man ville forvente, at underliggende genetik skulle spille meget ind i en anoreksisk patients velvære.
+
+Registerdata viser sig sjældent at være signifikant i nogen undermodeller, udover for de variable som vi har inkluderet i `baseline` (primært anbragt). Det vil tyde på at mange socioøkonomiske forhold, især fra forældrenes side, ikke spiller særligt meget ind i risikoen for genindlæggelse.
 
 ##
 # Plots og tabeller
@@ -193,7 +243,7 @@ make_reactable <- function(input){reactable(input %>%
   mutate_if(is_numeric, partial(round, digits=2)))}
 ```
 
-## {data-height=50}
+## {data-height=100}
 
 ####
 
@@ -213,7 +263,7 @@ plotit(NULL)
 make_reactable(hash_table[[NULL]])
 ```
 
-## {data-height=50}
+## {data-height=100}
 
 ####
 
@@ -234,7 +284,7 @@ make_reactable(hash_table[[names(all_list_names_no_baseline)]])
 
 ```
 
-## {data-height=50}
+## {data-height=100}
 
 ####
 
@@ -254,11 +304,11 @@ plotit(c("behavior", "lifestyle", "health", "congenital", "mental"))
 make_reactable(hash_table[[c("behavior", "lifestyle", "health", "congenital", "mental")]])
 ```
 
-## {data-height=50}
+## {data-height=100}
 
 ####
 
-Sidste eksempel inkluderer ingen ekstra genetiske variable, men kun dem vi har kaldt `somatic`, dvs. dem udarbejdet fra registerdata. Det viser sig, at ved $\alpha = 0.05$, ingen af disse i modellen er signifikante, og kun variable fra `baseline` er signifikante.
+Sidste eksempel inkluderer ingen ekstra genetiske variable, men kun dem vi har kaldt `somatic`, dvs. dem udarbejdet fra registerdata. Ved $\alpha = 0.05$ viser det sig, at ingen af disse er signifikante, og kun variable fra `baseline` er signifikante.
 
 ##
 
