@@ -1,6 +1,5 @@
 ---
 title: "Prediction of readmissions with Anorexia Nervosa - rapport"
-author: "Dataprojektgruppe"
 output:
   flexdashboard::flex_dashboard:
     vertical_layout: scroll
@@ -29,15 +28,15 @@ $$\begin{aligned}
 &\text{Morten Skovbjerg}\;&(202108037)\\
 &\text{Carrie Susanne Lovejoy}\;&(202106470)\end{aligned}$$
 
-Projektet har haft til formål at modellere/forudsige risikoen for genindlæggelse i psykiatrien efter kontakt (stillet diagnose) for personer diagnosticeret med anorexia nervosa. Til det formål har vi lavet en overlevelsesanalyse over patienternes genindlæggelsesrate, baseret på antal dage siden kontakt, og grundet et højt antal potentielt irrelevante variable, brugt LASSO til modelselektion. Et andet formål har været at kunne visualisere og tyde, om og hvis i så fald hvor meget forskellige undermodeller varierer mellem hinanden.
+Projektet har haft til formål at modellere/forudsige risikoen for genindlæggelse i psykiatrien efter kontakt (stillet diagnose) for personer diagnosticeret med anorexia nervosa. Til det formål har vi lavet en overlevelsesanalyse over patienternes genindlæggelsesrate, baseret på antal dage siden kontakt, og grundet et højt antal potentielt irrelevante variable, brugt LASSO til modelselektion. Et andet formål har været at kunne visualisere og tyde, om og hvis i så fald hvor meget bestemte grupper af variable har større betydning end andre.
 
 Til projektet har vi brugt data fra et studie over anoreksiske patienter vha. Statistikbanken fra Danmarks Statistik (DST). Det oprindelige datasæt indeholder information på 58076 personer, hvoraf 7774 er diagnosticeret med anoreksi, hvilket er dem af interesse i projektet. Af disse følger vi kun personer diagnosticeret efter 6-årsalderen, hvilket giver en casegruppe på 7759 personer. Endeligt var der ufuldstændig data på bl.a. PRS'er på 648 personer, hvilket giver et endeligt antal på 7111 personer. Til Cox-modellen er der registreret 1674 genindlæggelser som events, dvs. ca `r round(1674/7111*100, 2)`% blev genindlagt i løbet af perioden de blev fulgt.
 
-Dertil indeholder vores datasæt ca. 440 variable baseret på register- og gendata tilgængelig gennem DST og NCRR på AU. En særlig begrænsning ved projektet er at, da vi har med personhenførbar data at gøre, er vores output begrænset til summary data (nærmere sagt regregressionsdata).
+Dertil indeholder vores datasæt ca. 440 variable baseret på register- og gendata tilgængelig gennem DST og NCRR på AU. En særlig begrænsning ved projektet er at, da vi har med personhenførbar data at gøre, er vores output begrænset til summary data (nærmere sagt har vi kun estimaterne fra regressionerne).
 
 ### Model og metode
 
-Da vores analyse er interesseret i risikoen for genindlæggelse for anoreksipatienterne, har vi anvendt en overlevelsesanalysemodel kaldet [Cox-modellen](https://en.wikipedia.org/wiki/Proportional_hazards_model) til at estimere risikofaktoren for genindlæggelse for variablene. Koefficienter større end én betyder, at variablen er associeret med en højere genindlæggelsesrate, mens det modsatte gælder for koefficienter mindre end én. Formålet med modellen er her så, at identificere de faktorer som medfører den største eller mindste risiko for genindlæggelse.
+Da vores analyse er interesseret i raten for genindlæggelse for anoreksipatienterne, har vi anvendt en overlevelsesanalysemodel kaldet [Cox-modellen](https://en.wikipedia.org/wiki/Proportional_hazards_model) til at estimere risikofaktoren for genindlæggelse for variablene. Koefficienter større end én betyder, at variablen er associeret med en højere genindlæggelsesrate, mens det modsatte gælder for koefficienter mindre end én. Formålet med modellen er her så, at identificere de faktorer som medfører den største eller mindste risiko for genindlæggelse.
 
 Da vi i vores analyse har mange variable der kan have tvivlsom relevans for at forudsige anoreksi (og for genetiske variable er det endnu mere uklart, hvilke det skulle være), har vi anvendt LASSO-regularisering (ligning (4.20) i Reich, s. 128) på modellen til feature selection. LASSO ligner meget Ridge, som vi har set til forelæsningerne, dog udstyret med en anden norm til regulariseringsleddet. Dvs. koefficienterne estimeres ved
 
@@ -137,9 +136,9 @@ Disse variable indeholder variable inddelt i følgende grupper:
 reactable(somatic_table)
 ```
 
-Af disse blev `M_ASD`, `F_Anoreksi` og `F_ASD` udelukket, da de havde nul varians (evt. manglende data).
+Af disse blev `M_ASD`, `F_Anoreksi` og `F_ASD` udelukket (alle indikatorvariable for deres respektive diagnoser), da de havde nul varians (skyldes evt. manglende data).
 
-Af disse variable har vi inddelt PRS-variablene 
+Der er relativt få variable (ca. 30) udarbejdet fra registerdata; det skyldes primært, at det meste data, vi havde adgang til, var ufuldstændigt, og derfor har vi kun inkluderet variable, som ikke gør vores case-gruppe endnu mindre.
 
 ### {-}   
 
@@ -190,7 +189,7 @@ groupings_table <- read_rds("data/groupings_table.Rds")
 prs_explanatory <- read_from_excel("data/prs_explanatory.xlsx")[[1]]
 results_list <- read_rds("data/full_regression_list.Rds")
 
-fuckyou <- function(input = NULL){
+get_dataset <- function(input = NULL){
 
 map_to_variable <- function(variables) {
   if (!is_null(groupings_table[[variables]]))
@@ -219,7 +218,7 @@ dataset
 }
 
 plotit <- function(input =NULL){
-  fuckyou(input) %>%
+  get_dataset(input) %>%
     filter(`Pr(>|z|)` <= 0.05) %>%
     ggplot(aes(y = variables, color = group_names)) +
       theme_classic() +
